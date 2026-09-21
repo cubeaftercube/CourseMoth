@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="CourseMoth/CourseMoth.Droid/CourseMoth.Droid.csproj" />
+  <Project Path="CourseMoth/CourseMoth.iOS/CourseMoth.iOS.csproj" />
+  <Project Path="CourseMoth/CourseMoth.Mac/CourseMoth.Mac.csproj" />
+  <Project Path="CourseMoth/CourseMoth.WinUI/CourseMoth.WinUI.csproj">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="CourseMoth/CourseMoth/CourseMoth.csproj" />
+</Solution>
