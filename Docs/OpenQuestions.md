@@ -55,25 +55,15 @@ This should go into `CONTRIBUTING.md` when it is written.
 
 ## Modules and projects
 
-**Status:** 🔴 blocking stage 0
+**Status:** ✅ resolved
 
-[SystemMap](Maps/SystemMap.md#5-repository-map) describes eleven modules. The repository currently contains a stock .NET MAUI template with no modules at all.
+### Decision
 
-### The question
-
-Do the modules become separate `.csproj` projects, or folders inside the MAUI project?
-
-### Why it blocks
-
-The reason to separate them is not tidiness. It is that **`Core` must be testable without MAUI**. A domain model that can only be exercised through a running app is a domain model that will not be tested, and the completion rules, progress calculations, and fingerprinting are precisely the code most in need of tests.
-
-If the modules are folders inside the MAUI project, `CourseMoth.Core.Tests` cannot exist.
-
-### Recommendation
+**Modules become separate projects when, and only when, they need no platform.**
 
 ```text
-Separate netX.0 class libraries:
-    Shared · Core · Data · Parser · Tasks · Sync
+Separate net10.0 class libraries:
+    Core ✅ · Data ✅ · Parser · Tasks · Sync
 
 Stay in the multi-targeted MAUI project:
     Media · parts of Downloads
@@ -82,9 +72,15 @@ Separate heads:
     WinUI · Droid · iOS · Mac
 ```
 
-The criterion is platform dependency, not size. A module that needs no platform should not be in a platform-targeted project.
+The criterion is platform dependency, not size. It was applied and it held: `CourseMoth.Core` and `CourseMoth.Data` are plain `net10.0` libraries with no MAUI reference, and `CourseMoth.Core.Tests` runs 132 tests with no platform target and no device.
 
-### Decision needed before stage 0 closes.
+`Tasks` and `Sync` are not separate projects yet, but their logic already lives in `Core` (`TaskEvaluator`, `StreakCalculator`) and is therefore covered by the same tests. Splitting them out would buy nothing today.
+
+### What is still open
+
+- **`src/` layout not adopted.** The projects are separated, but they still sit under `CourseMoth/` rather than `src/`. The move was attempted and blocked by file locks held by a running Visual Studio, and was abandoned rather than forced — restructuring the tree under an open IDE risks more than it gains. Worth doing on a clean checkout.
+- **`Shared` was never created.** Its contents (stable keys, `course.json`) currently live in `Core`. Whether it earns its own project is a question for when a second consumer appears — the parser, most likely.
+- **`CourseMoth.Parser` does not exist**, and that is the reason folder import does not work end to end. See [Index](Index.md#two-things-that-do-not-work).
 
 ---
 
@@ -307,6 +303,120 @@ Downloads and space management · Statistics · Search
 
 ---
 
+## Third-party UI control suites
+
+**Status:** ✅ decided — do not adopt
+
+**Decision (2026-09-22): the project does not take a dependency on a commercial control suite.** The specific candidate was Syncfusion, via the `syncfusion/maui-ui-builder` agent skill that generates MAUI XAML over their controls. It was evaluated and rejected.
+
+### Why
+
+Syncfusion's licence is not merely restrictive, it is *incompatible with this project's licence by its own terms*. Their EULA's Open Source Project Terms forbid use of the controls in a project under **any copyleft licence, including GPL** — AGPLv3 is squarely covered. Using them in an open-source project requires a separate Master License Agreement, and under that agreement the project may only be MIT, Apache, or BSD.
+
+Even setting AGPL aside, their terms forbid redistributing the binaries within an open-source project: every person who builds the code must obtain a Syncfusion licence independently. That would break [§4.1 Offline-first](Vision.md#41-offline-first) — "works fully without the internet" — by making a third-party account a build prerequisite.
+
+Independently of the licence, a Community licence was not obtainable in this case — but the licence terms alone are what disqualify the dependency, and they would disqualify it for every contributor as well. The decision does not rest on the practical obstacle.
+
+### The rule that came out of it
+
+Any dependency added to this project must be **distributable under AGPLv3 by anyone, without registration, account, or per-user licence.** This is a hard constraint, not a preference — it follows directly from [Vision §4.5](Vision.md#45-open-code) and §4.1.
+
+A permissively-licensed control library would be fine. A commercially-licensed one cannot be adopted here at all, however good it is.
+
+### What was not rejected
+
+The *idea* of generating MAUI UI code from a requirement is sound. Only the licensing model of this particular implementation is disqualified. A generator producing plain MAUI controls would be welcome.
+
+---
+
+## The Add-folder button does not respond to a mouse click
+
+**Status:** 🔴 open — the Windows build is not usable until this is fixed
+
+A real mouse click on "Add folder with courses" does nothing. No dialog, no status text, no error.
+Verified by the user directly and reproduced independently.
+
+### What is established
+
+| Fact | How it was established |
+|---|---|
+| The button is enabled, visible and on screen | UI Automation: `IsEnabled=True`, `IsOffscreen=False` |
+| The command handler runs when invoked **programmatically** | A temporary counter printed `entered AddFolderAsync N time(s)` after `InvokePattern.Invoke()` |
+| The folder dialog **works** when the command runs | The user selected a folder and the status line showed the chosen path |
+| The dialog returns a folder after ~3 s | Status text appeared between 1 s and 3 s after invocation |
+
+### What is therefore **not** broken
+
+The picker, the ViewModel, the command, and the DI graph. All four were suspected and all four were
+cleared. The failure is on the **input path** — the click is not reaching the handler.
+
+### What was tried
+
+- **Replaced `Command="{Binding AddFolderCommand}"` with `Clicked="OnAddFolderClicked"`** in
+  `HomePage.xaml`, with the handler calling the ViewModel method directly. Rationale: the page's
+  `BindingContext` is a service provider passed down by `AppShell`, not the ViewModel
+  ([CourseMothPage](../CourseMoth/CourseMoth/Pages/CourseMothPage.cs)), which makes a `Command`
+  binding on it the most fragile link in the chain. **Applied, built clean, not verified** — the
+  check needs a genuine mouse click, and the session ended before one could be made.
+
+### What to try next
+
+In rough order of likelihood:
+
+1. **Hit-testing.** Something may be covering the button and swallowing the press. The button sits
+   inside a `ScrollView` that is itself inside a `Grid`; check the sibling `ScrollView` that shows
+   the loaded state, and the `ActivityIndicator` above it, for an invisible overlay.
+2. **A `ScrollView` that cannot scroll.** If a `ScrollView` marks the press handled while deciding
+   whether a drag is a scroll, a tap inside it never becomes a `Clicked`.
+3. **The handler is reached but the exception is swallowed.** Re-check that an exception thrown in
+   `OnAddFolderClicked` reaches the screen at all.
+
+### The verification lesson
+
+Three separate claims in this area were believed and were wrong. Recording them so the same mistake
+is not repeated:
+
+- A status line reading `Selected: <path>` was taken as proof the picker worked. An independent
+  verification run showed the **same path came back on six invocations across three launches**,
+  including runs where no dialog was ever seen. A plausible-looking string is not evidence.
+- A build was judged to contain a fix by looking for a string in the wrong assembly — the picker
+  lives in the WinUI head, and the string was searched for in `CourseMoth.dll`.
+- A test was trusted to exercise a real click when it was exercising a programmatic invoke. The two
+  take different paths through the UI and can disagree, which is exactly what happened here.
+
+**The rule that follows: verify the specific thing being claimed.** A command that runs when invoked
+is not a button that works when clicked.
+
+---
+
+## Slopwatch: one open finding
+
+**Status:** 🟠 open, minor
+
+`slopwatch analyze -d . --no-baseline --fail-on warning` reports exactly **one** issue across the
+whole solution:
+
+```
+ViewModelBase.cs(50,9): error SW003: Empty catch block swallows exceptions without handling
+    catch (OperationCanceledException)
+    {
+        // Navigating away is not an error and must not surface as one.
+    }
+```
+
+The behaviour is correct — a cancelled load is not a failure and must not surface as one — but the
+tool cannot tell an intentional empty catch from a careless one, and it is right not to guess. The
+fix is to declare the intent rather than leave it implicit:
+
+```csharp
+[SlopwatchSuppress("SW003", "Cancellation is a navigation event, not a failure, and must not surface as an error.")]
+```
+
+Nothing else in the solution trips any rule: no disabled tests, no warning suppressions, no
+project-level `NoWarn`, no arbitrary delays in tests, no CPM bypass.
+
+---
+
 ## `course.json` as a public contract
 
 **Status:** ⚪ strategic, not blocking
@@ -329,8 +439,8 @@ If third-party adoption is a goal, this format deserves a document of its own ra
 
 | Stage | Blocking questions |
 |---|---|
-| 0 | Modules and projects · server architecture (packaging implications) |
-| 1 | Android file access (SAF spike) |
+| 0 | ✅ closed — modules became projects, see [above](#modules-and-projects) |
+| **1** | 🔴 **the Add-folder button ignores a mouse click** · then the parser · Android file access (SAF spike) |
 | 2 | Player engine (pitch and subtitle spikes) |
 | 3 | — |
 | 4 | Time zone and day boundary |

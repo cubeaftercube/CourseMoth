@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<pages:CourseMothPage
+    x:Class="CourseMoth.Pages.TasksPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:pages="clr-namespace:CourseMoth.Pages"
+    xmlns:models="clr-namespace:CourseMoth.Models"
+    xmlns:vm="clr-namespace:CourseMoth.ViewModels"
+    x:DataType="vm:TasksViewModel"
+    Title="Tasks">
+
+    <ContentPage.Content>
+        <Grid RowDefinitions="Auto,*">
+
+            <!-- Segments: Today / Upcoming / Done (UXMap §3.7). -->
+            <Border
+                Grid.Row="0"
+                Margin="16,12,16,4"
+                Padding="4"
+                StrokeShape="RoundRectangle 10">
+                <Grid x:Name="Segments" ColumnDefinitions="*,*,*" />
+            </Border>
+
+            <CollectionView
+                Grid.Row="1"
+                ItemsSource="{Binding Items}"
+                SelectionMode="None">
+
+                <CollectionView.EmptyView>
+                    <ContentView>
+                        <VerticalStackLayout
+                            Padding="32"
+                            Spacing="12"
+                            VerticalOptions="Center">
+                            <Label
+                                FontAttributes="Bold"
+                                FontSize="20"
+                                HorizontalTextAlignment="Center"
+                                Text="{Binding EmptyTitle}" />
+                            <Label
+                                HorizontalTextAlignment="Center"
+                                Opacity="0.7"
+                                Text="{Binding EmptyMessage}" />
+                            <Button
+                                Command="{Binding CreateTaskCommand}"
+                                HorizontalOptions="Center"
+                                Text="Create a task" />
+                        </VerticalStackLayout>
+                    </ContentView>
+                </CollectionView.EmptyView>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:TaskItem">
+                        <Border
+                            Margin="16,6"
+                            Padding="14"
+                            StrokeShape="RoundRectangle 12">
+                            <VerticalStackLayout Spacing="8">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                    <Label
+                                        Grid.Column="0"
+                                        FontAttributes="Bold"
+                                        Text="{Binding Title}"
+                                        VerticalOptions="Center" />
+
+                                    <!-- A tick for a done task, the ratio for one with a target. -->
+                                    <Label
+                                        Grid.Column="1"
+                                        FontSize="15"
+                                        IsVisible="{Binding IsCompleted}"
+                                        Text="✓"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Grid.Column="1"
+                                        FontSize="13"
+                                        IsVisible="{Binding HasProgress}"
+                                        Opacity="0.75"
+                                        Text="{Binding ProgressText}"
+                                        VerticalOptions="Center" />
+                                </Grid>
+
+                                <ProgressBar
+                                    IsVisible="{Binding HasProgress}"
+                                    Progress="{Binding ProgressPercent}" />
+
+                                <!-- Source label distinguishes an automatic task visually, not
+                                     only by its text (UXMap §3.7). -->
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                    <Border
+                                        Grid.Column="0"
+                                        Padding="6,2"
+                                        StrokeShape="RoundRectangle 6"
+                                        Opacity="0.75">
+                                        <Label FontSize="11" Text="{Binding SourceLabel}" />
+                                    </Border>
+                                    <Label
+                                        Grid.Column="1"
+                                        FontSize="12"
+                                        IsVisible="{Binding Detail}"
+                                        Opacity="0.6"
+                                        Text="{Binding Detail}"
+                                        VerticalOptions="Center" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
+    </ContentPage.Content>
+</pages:CourseMothPage>

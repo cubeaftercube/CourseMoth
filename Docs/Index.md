@@ -84,23 +84,40 @@ Full statement: [Vision](Vision.md)
 
 ## Current state
 
-The repository holds a **stock .NET MAUI template**. No project structure from [SystemMap](Maps/SystemMap.md) exists yet, no domain code has been written, and the documentation you are reading is the most developed part of the project.
-
-That is deliberate: the design decisions that are expensive to reverse — the data model, course identity, module boundaries — are settled before code depends on them.
+**Stage 0 is done and stage 1 is partly done.** The domain layer and the storage layer exist and are tested; the app builds and launches on Windows with all five tabs working.
 
 | Area | State |
 |---|---|
 | Documentation | ✅ Complete for stages 0–10 |
-| Repository structure | ❌ Stock MAUI template |
-| Domain code | ❌ Not started |
+| Solution structure | ✅ `Core`, `Data`, `Core.Tests` as separate `net10.0` libraries |
+| Domain code | ✅ 9 services, 132 tests, no MAUI dependency |
+| Storage | ✅ SQLite schema, 9 repositories, verified round-trip |
+| Application shell | ✅ Shell with five tabs, DI wired, runs on Windows |
+| **Add-folder button** | ❌ **A real mouse click does nothing — see below** |
+| **Parser** | ❌ **Not started** |
 | Player | ❌ Not started |
-| Tests | ❌ Not started |
 | `LICENSE` | ✅ AGPLv3 |
-| `README` | ⚠️ Needs updating (claims "license TBD") |
+| `README` | ✅ Updated |
 | `CONTRIBUTING` | ❌ Not written |
 | `samples/` | ❌ Not created |
 
-**Next actions:** [OpenQuestions § Summary by stage](OpenQuestions.md#summary-by-stage) and the spike list below it.
+### Two things that do not work
+
+**1. The "Add folder with courses" button ignores a mouse click.** The click is not reaching the
+handler at all; the button is enabled, visible and on screen. Invoking the same code path
+programmatically *does* open the folder dialog and return a folder, so the import logic behind the
+button is sound — the input path to it is not. Replacing the `Command` binding with a `Clicked`
+handler in code-behind has been done but **not verified**, because the check needed a real mouse
+click. This is the next thing to investigate, and it is tracked in
+[OpenQuestions](OpenQuestions.md#the-add-folder-button-does-not-respond-to-a-mouse-click).
+
+**2. The parser does not exist.** Everything downstream of a parsed course is built —
+`ImportService` turns a `ParsedRoot` into courses, modules and lessons, the fingerprint is computed,
+the rows are persisted — but nothing produces a `ParsedRoot` from a directory. Even once the button
+responds, it will stop at the dialog until this is written. [ParserSpec](Specs/ParserSpec.md) is
+its specification.
+
+**Next actions:** make the button respond, then build the parser, then run the five spikes below.
 
 ---
 

@@ -1,0 +1,72 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The storage layer: SQLite and everything connected to it (SystemMap §3, "Data").
+
+    Deliberately a plain net10.0 library with NO MAUI reference and no reference to the app
+    project, for two reasons:
+
+      1. It must stay testable without a platform target, the same way Core is.
+      2. The Windows server (ServerApiSpec §2, "Storage note") reads the library out of the
+         same database. It is not a MAUI app and must be able to reference this assembly.
+
+    The dependency direction is UI -> Data -> Core, never the reverse. Data implements the
+    repository interfaces Core declares; Core knows nothing about SQLite.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>CourseMoth.Data</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      sqlite-net-pcl, as chosen in the readme "Stack" section and left open in
+      DomainMap §9. A thin, attribute-driven ORM over SQLite; EF Core was rejected in the
+      docs as too heavy for an app whose whole database is a handful of small tables.
+
+      SQLitePCLRaw.bundle_green ships the native e_sqlite3 for every platform we target.
+      Declaring it explicitly rather than relying on sqlite-net-pcl's transitive reference
+      keeps the native provider pinned and visible.
+    -->
+    <PackageReference Include="sqlite-net-pcl" Version="1.11.285" />
+
+    <!--
+      The SQLitePCLRaw bundle. Declared explicitly rather than inherited from sqlite-net-pcl, so
+      the version that ships is a decision visible in this file.
+
+      bundle_e_sqlite3 rather than bundle_green, deliberately. Both were 2.1.11 on the restore
+      path, and 2.1.11 bundles the native e_sqlite3 covered by GHSA-2m69-gcr7-jv3q (severity:
+      high). The two differ in how that can be escaped:
+
+        - bundle_green resolves per-platform to `lib.e_sqlite3.android`, `lib.e_sqlite3.ios`, and
+          friends. Its last release is 2.1.11 and none of those platform siblings has a fixed
+          release either, so pinning the desktop `lib.e_sqlite3` alone does not reach Android —
+          it only makes the desktop clean and leaves a second, older `libe_sqlite3.so` in the
+          same APK. That is worse than the original problem, and it is how this was found.
+        - bundle_e_sqlite3 has 3.x releases, which carry the fixed native build for every
+          platform including Android.
+
+      Both bundles supply the same `provider.e_sqlite3` that sqlite-net-pcl binds against, so
+      swapping them is a packaging change, not an API one. The round-trip harness in the repo
+      history verifies the pairing on the resolved native build.
+    -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
+
+    <!--
+      For IServiceCollection and the AddSingleton extensions. Abstractions only — the concrete
+      Microsoft.Extensions.DependencyInjection container stays out of a class library. The
+      composition root that owns the container is the app, or a server host later.
+    -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CourseMoth.Core\CourseMoth.Core.csproj" />
+  </ItemGroup>
+
+</Project>

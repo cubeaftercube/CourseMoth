@@ -6,4 +6,7 @@
     <Platform Project="x64" />
   </Project>
   <Project Path="CourseMoth/CourseMoth/CourseMoth.csproj" />
+  <Project Path="CourseMoth/CourseMoth.Core/CourseMoth.Core.csproj" />
+  <Project Path="CourseMoth/CourseMoth.Data/CourseMoth.Data.csproj" />
+  <Project Path="CourseMoth/CourseMoth.Core.Tests/CourseMoth.Core.Tests.csproj" />
 </Solution>

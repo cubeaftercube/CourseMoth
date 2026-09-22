@@ -96,6 +96,13 @@ Depth is capped because nested archives and junk trees break every heuristic.
 
 The folder the user picked is one of two shapes:
 
+> **Where a flat course's lessons live.** A course whose video sits directly in its root carries
+> them in `ParsedCourse.Lessons` with an **empty `Modules` list** — not in a module with a blank
+> title. The distinction is load-bearing: a course has either `Modules` or `Lessons` at the top
+> level, never both, and only the empty-`Modules` shape produces no `CourseModule` row
+> ([DomainMap §3.2](../Maps/DomainMap.md#32-coursemodule)). A blank-titled module would be
+> written to the database as a real module and leak into progress, the UI and sync.
+
 **Mode A — one folder = one course**
 ```text
 /Программирование на C#
@@ -376,6 +383,7 @@ public class ParsedCourse
     public string RootRelativePath { get; init; }
     public Guid? MetadataId { get; init; }     // from course.json
     public IReadOnlyList<ParsedModule> Modules { get; set; }
+    public IReadOnlyList<ParsedLesson> Lessons { get; set; }   // flat course: no modules above them
     public ParseConfidence Confidence { get; init; }
     public bool IsExcluded { get; set; }       // user unchecked it
 }
@@ -385,6 +393,7 @@ public class ParsedModule
     public string Title { get; set; }
     public int Order { get; set; }
     public IReadOnlyList<ParsedLesson> Lessons { get; set; }
+    public bool IsExcluded { get; set; }       // user unchecked the whole module
 }
 
 public class ParsedLesson

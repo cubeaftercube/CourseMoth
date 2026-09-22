@@ -291,6 +291,12 @@ DueDate is today        → shown under "Today"
 DueDate passed          → shown as overdue, not silently removed
 ```
 
+**An automatic task's `DueDate` is midnight on the day it belongs to**, and is deliberately *not* shifted by the day boundary.
+
+This was got wrong once, in a way worth recording. An earlier version stamped a day's tasks at the boundary that closes it — 04:00 on the following calendar date — reasoning that a study day ends when the next one begins. But an instant late on the following date keys to *that* date, so the task the generator wrote for day D could not be found by a query for day D and surfaced under D + 1 instead. The generator then concluded day D had never been generated and produced a second set.
+
+The rule that came out of it: **the boundary decides which study day a moment belongs to; it does not move a deadline.** These are two different questions and conflating them cost two live bugs — the invisible task, and the duplicate set. See also [§3](#3-study-day-and-the-day-boundary).
+
 An overdue task is not automatically failed. It stays visible until the user completes or deletes it.
 
 ---

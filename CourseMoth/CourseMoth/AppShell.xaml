@@ -3,13 +3,63 @@
     x:Class="CourseMoth.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:CourseMoth"
+    xmlns:pages="clr-namespace:CourseMoth.Pages"
     Shell.FlyoutBehavior="Disabled"
     Title="CourseMoth">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <!--
+        The five top-level destinations of UXMap §2, in order.
+
+        Every tab is a Tab, not a bare ShellContent: Tab.Title is not an inheritable
+        bindable property, so a ShellContent's own Title does not reach the bottom bar and
+        the tab would render without a label. Tab does inherit its BindingContext from the
+        Shell, which is what supplies the label text.
+
+        Every tab carries an explicit Route. An omitted Route gets an auto-generated
+        D_FAULT_* name that shifts whenever the tabs are reordered, and no stable absolute
+        route can be written against it.
+
+        Pages are declared with ContentTemplate so they are constructed on first navigation
+        rather than at shell init.
+    -->
+
+    <TabBar>
+
+        <Tab Title="Home" Route="home">
+            <ShellContent
+                Title="{Binding HomeTabTitle}"
+                ContentTemplate="{DataTemplate pages:HomePage}"
+                Route="home" />
+        </Tab>
+
+        <Tab Title="Library" Route="library">
+            <ShellContent
+                Title="{Binding LibraryTabTitle}"
+                ContentTemplate="{DataTemplate pages:LibraryPage}"
+                Route="library" />
+        </Tab>
+
+        <Tab Title="Tasks" Route="tasks">
+            <ShellContent
+                Title="{Binding TasksTabTitle}"
+                ContentTemplate="{DataTemplate pages:TasksPage}"
+                Route="tasks" />
+        </Tab>
+
+        <Tab Title="Downloads" Route="downloads">
+            <ShellContent
+                Title="{Binding DownloadsTabTitle}"
+                ContentTemplate="{DataTemplate pages:DownloadsPage}"
+                Route="downloads" />
+        </Tab>
+
+        <Tab Title="Settings" Route="settings">
+            <ShellContent
+                Title="{Binding SettingsTabTitle}"
+                ContentTemplate="{DataTemplate pages:SettingsPage}"
+                Route="settings" />
+        </Tab>
+
+    </TabBar>
 
 </Shell>

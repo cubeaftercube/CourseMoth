@@ -246,23 +246,26 @@ docs/
 
 ### Current state
 
-The repository currently holds a **stock .NET MAUI template** and has not been brought to the target structure:
+Three of the eleven modules exist, as separate `net10.0` libraries. The rest are still folders-not-yet-projects, and the `src/` move has not happened — the projects sit under `CourseMoth/` because Visual Studio held file locks on the directory when the move was attempted.
 
 ```text
 CourseMoth.slnx
 CourseMoth/
-  CourseMoth/             # shared UI project (App, AppShell, MainPage, Styles)
-  CourseMoth.WinUI/       # Windows head
-  CourseMoth.Droid/       # Android head
-  CourseMoth.iOS/         # iOS head
-  CourseMoth.Mac/         # Mac Catalyst head
+  CourseMoth.Core/        # ✅ domain — 9 services, no MAUI reference
+  CourseMoth.Data/        # ✅ SQLite — schema, 9 repositories, no MAUI reference
+  CourseMoth.Core.Tests/  # ✅ 132 tests, runs without a platform
+  CourseMoth/             # ✅ MAUI app — Shell, five tabs, DI, themes
+  CourseMoth.WinUI/       # ✅ Windows head
+  CourseMoth.Droid/       # ⬜ Android head (builds, unverified on device)
+  CourseMoth.iOS/         # ⬜ iOS head (untested — no Apple hardware)
+  CourseMoth.Mac/         # ⬜ Mac Catalyst head (untested)
 Docs/
 readme.md
 ```
 
-Inside `CourseMoth/CourseMoth/` there is not a single one of the modules above — it is the template `App` / `AppShell` / `MainPage`.
+**`Parser` is the missing piece.** `Tasks` and `Sync` are not separate projects yet either, but their logic already lives in `Core` (`TaskEvaluator`, `StreakCalculator`) and is therefore covered by tests. The parser has no home at all, which is why import does not work end to end.
 
-> **The gap is recorded in [OpenQuestions](../OpenQuestions.md#modules-and-projects).** Before writing code, we need to decide whether the modules become separate projects (`CourseMoth.Core` as an ordinary library) or remain folders inside the MAUI project. This decision determines whether the domain can be tested without the platform, so it cannot be postponed.
+> The modules-versus-projects question is settled — see [OpenQuestions](../OpenQuestions.md#modules-and-projects). The criterion applied was platform dependency, and it held: `Core` and `Data` are plain libraries, `Media` will be the first that genuinely needs the platform.
 
 ### The rule for splitting into projects
 

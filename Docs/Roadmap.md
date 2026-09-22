@@ -26,8 +26,8 @@ The stages are ordered by two rules:
 | 0 | Project skeleton | The app launches on Windows and Android | 🔶 in progress |
 | 1 | Local library | Folder → a recognized course in the library | ⬜ |
 | 2 | Basic player | I watch and resume from where I stopped | ⬜ |
-| 3 | Progress and statuses | The app knows what has been completed | ⬜ |
-| 4 | Tasks and streaks | A study routine emerges | ⬜ |
+| 3 | Progress and statuses | The app knows what has been completed | 🔶 domain done, UI not |
+| 4 | Tasks and streaks | A study routine emerges | 🔶 domain done, UI not |
 | 5 | Data transfer | Progress travels between devices as a file | ⬜ |
 | 6 | PC as the core | The PC serves courses and progress | ⬜ |
 | 7 | Downloads and space | Comfortable on a phone without manual cleanup | ⬜ |
@@ -43,14 +43,15 @@ The stages are ordered by two rules:
 
 ### Tasks
 
-- [ ] Repository, README, LICENSE (AGPLv3), CONTRIBUTING
-- [ ] Bring `slnx` to the target structure from [SystemMap](Maps/SystemMap.md#target-structure)
-- [ ] Split platform-independent modules into ordinary `netX.0` libraries
-- [ ] Basic navigation: `Shell` with five tabs
-- [ ] Themes: light / dark / system
-- [ ] DI: service registration
-- [ ] Empty screens: Home, Library, Tasks, Downloads, Settings
-- [ ] Documentation in `Docs/`
+- [x] Repository, README, LICENSE (AGPLv3)
+- [ ] CONTRIBUTING
+- [ ] Bring `slnx` to the `src/` layout from [SystemMap](Maps/SystemMap.md#target-structure) — the projects are separated; the directory move is not done
+- [x] Split platform-independent modules into ordinary `net10.0` libraries — `Core` and `Data` carry no MAUI reference
+- [x] Basic navigation: `Shell` with five tabs
+- [x] Themes: light / dark / system
+- [x] DI: service registration — every service and every ViewModel resolves
+- [x] Empty screens: Home, Library, Tasks, Downloads, Settings
+- [x] Documentation in `Docs/`
 
 ### Definition of done
 
@@ -61,7 +62,9 @@ The dark theme toggles.
 The domain builds and is tested without MAUI.
 ```
 
-The last item is the main one. If `CourseMoth.Core` cannot be built without MAUI, the stage 0 structure has not been achieved and stage 1 will start with technical debt.
+The last item is the main one. **It is met.** `CourseMoth.Core` and `CourseMoth.Data` are plain `net10.0` libraries, and `CourseMoth.Core.Tests` runs 132 tests with no platform target and no device.
+
+**Verified rather than assumed:** the Windows app was launched and each of the five tabs opened in turn; the storage layer was exercised against a real SQLite file, including Cyrillic titles and paths, a leap-day `DateOnly`, and a `TimeSpan?` duration. Android builds clean but has not been run on a device.
 
 ---
 

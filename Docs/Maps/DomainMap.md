@@ -501,11 +501,25 @@ The cross-cutting rule: **entities are not physically deleted while that could b
 
 ## 10. What Needs to Be Done Before Writing Code
 
-- [ ] Decide which entities are in the MVP (see below) — do not design the rest any further.
-- [ ] Lock down the `course.json` schema as a contract — course identity depends on it.
-- [ ] Determine how `StableKey` differs from `RelativePath` — right now they almost duplicate each other.
-- [ ] Decide the fate of `LearningActivity` when the time zone changes — [OpenQuestions](../OpenQuestions.md#time-zones-and-the-day-boundary).
-- [ ] Choose: `sqlite-net-pcl` or EF Core.
+- [x] Decide which entities are in the MVP — done, and the split held: `Tag`, `Subtitle`, `DownloadJob` and `CourseFingerprint` are still not implemented.
+- [ ] Lock down the `course.json` schema as a contract — course identity depends on it. Still open; the parser will force it.
+- [x] Determine how `StableKey` differs from `RelativePath` — they serve different jobs and both were kept. `RelativePath` is where the file is *now* and rebinds on rescan; `StableKey` is derived from the *name*, survives a move within the source, and is the human-readable fallback for sync.
+- [x] Decide the fate of `LearningActivity` when the time zone changes — see [OpenQuestions](../OpenQuestions.md#time-zones-and-the-day-boundary). A day's date is computed once when the activity is recorded and never recomputed.
+- [x] Choose: `sqlite-net-pcl` or EF Core — **`sqlite-net-pcl`**, as the docs anticipated.
+
+### Decisions taken while building the storage layer
+
+These were not in the plan and are worth knowing before touching the schema:
+
+| Decision | Why |
+|---|---|
+| `DateOnly` is stored as a `long` in `yyyyMMdd` form | sqlite-net cannot map `DateOnly`, and a tick count would break range queries and sorting. Verified across a leap day and a year boundary. |
+| `TimeSpan?` is stored as `long?` milliseconds | Null must stay a real null, never a sentinel: "duration unknown" and "duration zero" are different facts, and progress depends on telling them apart. |
+| `RecurrenceRule` is stored as a bitmask plus a date key | It is the one field in the schema that must be comparable and sortable. Serialising it as JSON would have made it the only column that could not be queried. |
+| Enums are stored as integers | sqlite-net's default. Pinned deliberately: changing it later would silently reinterpret every existing row. |
+| `SyncEntityMetadata` has a composed primary key | It is the one table keyed by `(EntityType, EntityId)` rather than a single id. Declaring two `[PrimaryKey]` members compiles and then throws on first table creation. |
+
+A defect worth recording, because it is the kind that does not announce itself: the task repository initially compared a due date encoded as ticks against a window encoded as `yyyyMMdd`. The scales are 11 orders of magnitude apart, so every comparison was nonsense and **a task with a due date silently vanished from its own day** — no error, it simply was not there. Any change to how dates are encoded must keep the encoder and the query argument on the same scale.
 
 ### MVP Entities
 

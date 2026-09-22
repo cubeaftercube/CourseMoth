@@ -15,13 +15,15 @@
 		       <MauiXaml Update="MyPage.xaml" Inflator="Default" /> (reverts to defaults: Runtime for Debug, XamlC for Release)
 		       <MauiXaml Update="MyPage.xaml" Inflator="Runtime" /> (force runtime inflation) -->
 		<MauiXamlInflator>SourceGen</MauiXamlInflator>
+
+		<!-- Compiled bindings: a binding without a resolvable x:DataType scope is an
+		     error here rather than a silent fallback to reflection (XC0022).
+		     XC0025 is deliberately NOT promoted: the project has Source= /
+		     RelativeSource bindings and adding it would turn those into errors. -->
+		<WarningsAsErrors>XC0022</WarningsAsErrors>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- Images -->
-		<MauiImage Include="Resources\Images\*" />
-		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
-
 		<!-- Custom Fonts -->
 		<MauiFont Include="Resources\Fonts\*" />
 
@@ -32,6 +34,20 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- The domain layer. A plain net10.0 library with no MAUI reference, so the
+		     dependency direction stays UI -> Core and never the reverse (SystemMap §2). -->
+		<ProjectReference Include="..\CourseMoth.Core\CourseMoth.Core.csproj" />
+
+		<!-- The storage layer: SQLite-backed implementations of Core's repository interfaces.
+		     Also a plain net10.0 library with no MAUI reference, because the Windows server
+		     reads the same database (ServerApiSpec §2, "Storage note"). The UI references it
+		     only to hand it a database path and to register it; no page or ViewModel ever
+		     names a type from it (SystemMap §5). -->
+		<ProjectReference Include="..\CourseMoth.Data\CourseMoth.Data.csproj" />
 	</ItemGroup>
 
 </Project>

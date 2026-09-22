@@ -54,7 +54,17 @@ Documentation is in English so contributors can work from it directly.
 
 ## Status
 
-Early. The documentation is complete for all planned stages; the code is a stock .NET MAUI template. The design decisions that are expensive to reverse — data model, course identity, module boundaries — are settled before code depends on them.
+Early, but the foundation is in place.
+
+| Layer | State |
+|---|---|
+| Documentation | Complete for all planned stages |
+| Domain (`CourseMoth.Core`) | 9 services, 132 tests, no MAUI dependency |
+| Storage (`CourseMoth.Data`) | SQLite schema and repositories, verified round-trip |
+| App | Shell with five tabs, DI wired, builds and runs on Windows |
+| Parser | **Not started** — folder import does not work end to end yet |
+
+What works today is the shell and everything downstream of a parsed course. What does not work is getting a course into the library, because nothing yet reads a folder. That is the next piece of work; [ParserSpec](Docs/Specs/ParserSpec.md) is its specification.
 
 Open technical questions and the spike backlog are in [OpenQuestions](Docs/OpenQuestions.md).
 

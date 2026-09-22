@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<pages:CourseMothPage
+    x:Class="CourseMoth.Pages.LibraryPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:pages="clr-namespace:CourseMoth.Pages"
+    xmlns:models="clr-namespace:CourseMoth.Models"
+    xmlns:vm="clr-namespace:CourseMoth.ViewModels"
+    x:DataType="vm:LibraryViewModel"
+    Title="Library">
+
+    <ContentPage.Content>
+        <Grid RowDefinitions="Auto,*">
+
+            <!-- Filters and sorting (UXMap §3.2). -->
+            <VerticalStackLayout Grid.Row="0" Padding="16,12,16,8" Spacing="8">
+                <Picker
+                    ItemsSource="{Binding Filters}"
+                    SelectedItem="{Binding SelectedFilter}"
+                    Title="Filter" />
+                <Picker
+                    ItemsSource="{Binding Sorts}"
+                    SelectedItem="{Binding SelectedSort}"
+                    Title="Sort by" />
+            </VerticalStackLayout>
+
+            <CollectionView
+                Grid.Row="1"
+                ItemsSource="{Binding Courses}"
+                SelectionMode="None">
+
+                <CollectionView.EmptyView>
+                    <ContentView>
+                        <VerticalStackLayout
+                            Padding="32"
+                            Spacing="12"
+                            VerticalOptions="Center">
+                            <Label
+                                FontAttributes="Bold"
+                                FontSize="20"
+                                HorizontalTextAlignment="Center"
+                                Text="{Binding EmptyTitle}" />
+                            <Label
+                                HorizontalTextAlignment="Center"
+                                Opacity="0.7"
+                                Text="{Binding EmptyMessage}" />
+                        </VerticalStackLayout>
+                    </ContentView>
+                </CollectionView.EmptyView>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:CourseCard">
+                        <Border
+                            Margin="16,6"
+                            Padding="14"
+                            StrokeShape="RoundRectangle 12">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCourseTapped" />
+                            </Border.GestureRecognizers>
+
+                            <VerticalStackLayout Spacing="6">
+                                <Label
+                                    FontAttributes="Bold"
+                                    FontSize="17"
+                                    LineBreakMode="TailTruncation"
+                                    MaxLines="2"
+                                    Text="{Binding Title}" />
+                                <Label
+                                    FontSize="13"
+                                    Opacity="0.65"
+                                    LineBreakMode="TailTruncation"
+                                    MaxLines="1"
+                                    Text="{Binding Subtitle}" />
+
+                                <ProgressBar Progress="{Binding ProgressPercent}" />
+
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label
+                                        Grid.Column="0"
+                                        FontSize="12"
+                                        Opacity="0.65"
+                                        Text="{Binding ProgressDetail}" />
+                                    <Label
+                                        Grid.Column="1"
+                                        FontAttributes="Bold"
+                                        FontSize="12"
+                                        Text="{Binding ProgressText}" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
+    </ContentPage.Content>
+</pages:CourseMothPage>

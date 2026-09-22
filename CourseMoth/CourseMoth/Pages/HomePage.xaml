@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<pages:CourseMothPage
+    x:Class="CourseMoth.Pages.HomePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:pages="clr-namespace:CourseMoth.Pages"
+    xmlns:models="clr-namespace:CourseMoth.Models"
+    xmlns:vm="clr-namespace:CourseMoth.ViewModels"
+    x:DataType="vm:HomeViewModel"
+    Title="Home">
+
+    <ContentPage.Content>
+        <Grid RowDefinitions="Auto,*">
+
+            <!-- Streak and the day's task count: the two things Home answers first (UXMap §3.1). -->
+            <Border
+                Grid.Row="0"
+                Margin="16,16,16,8"
+                Padding="16"
+                StrokeShape="RoundRectangle 12"
+                IsVisible="{Binding IsLoaded}">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <Label
+                        Grid.Column="0"
+                        FontSize="28"
+                        Text="🔥"
+                        VerticalOptions="Center" />
+                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                        <Label
+                            FontAttributes="Bold"
+                            FontSize="20"
+                            Text="{Binding StreakText}" />
+                        <Label
+                            FontSize="13"
+                            Opacity="0.7"
+                            Text="{Binding TodayTasksSummary}" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <ActivityIndicator
+                Grid.Row="1"
+                IsRunning="{Binding IsBusy}"
+                IsVisible="{Binding IsBusy}"
+                VerticalOptions="Center" />
+
+            <!-- First launch: no courses. This is the onboarding screen (UXMap §3.1). -->
+            <ScrollView Grid.Row="1" IsVisible="{Binding IsLibraryEmpty}">
+                <VerticalStackLayout
+                    Padding="32,24"
+                    Spacing="16"
+                    VerticalOptions="Center">
+                    <Label
+                        FontAttributes="Bold"
+                        FontSize="24"
+                        HorizontalTextAlignment="Center"
+                        Text="Your library is empty" />
+                    <Label
+                        HorizontalTextAlignment="Center"
+                        Opacity="0.75"
+                        Text="CourseMoth turns a folder of downloaded courses into a library you can actually finish: it reads the structure into courses, modules and lessons, remembers where you stopped, and keeps track of what to watch next." />
+                    <Label
+                        HorizontalTextAlignment="Center"
+                        Opacity="0.75"
+                        Text="Nothing is uploaded anywhere and nothing is moved. The folder stays yours — CourseMoth only reads it." />
+                    <!--
+                        Clicked is handled in code-behind rather than through a Command binding.
+                        A real mouse click did not reach a Command bound here, while invoking the
+                        same command in code did — so the command was never the problem and the
+                        binding was. An event handler has no binding to fail: it is wired to the
+                        same method the command calls, on the page that owns the button.
+                    -->
+                    <Button
+                        Margin="0,8,0,0"
+                        Clicked="OnAddFolderClicked"
+                        HorizontalOptions="Center"
+                        Text="Add folder with courses" />
+
+                    <!--
+                        The result of the last attempt. Without this the action is invisible —
+                        the dialog closes, the path goes nowhere, and the button looks dead.
+                    -->
+                    <Label
+                        FontSize="13"
+                        HorizontalTextAlignment="Center"
+                        IsVisible="{Binding HasImportStatus}"
+                        Text="{Binding ImportStatus}"
+                        TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                    <Label
+                        FontSize="13"
+                        HorizontalTextAlignment="Center"
+                        IsVisible="{Binding HasError}"
+                        Text="{Binding ErrorMessage}"
+                        TextColor="{AppThemeBinding Light={StaticResource Magenta}, Dark={StaticResource Magenta}}" />
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <ScrollView Grid.Row="1" IsVisible="{Binding IsLoaded}">
+                <VerticalStackLayout Padding="16,0,16,24" Spacing="16">
+
+                    <!-- Continue: the one action Home exists to offer. -->
+                    <VerticalStackLayout IsVisible="{Binding HasContinue}" Spacing="8">
+                        <Label
+                            FontAttributes="Bold"
+                            FontSize="12"
+                            Opacity="0.6"
+                            Text="CONTINUE" />
+
+                        <Border Padding="16" StrokeShape="RoundRectangle 12">
+                            <VerticalStackLayout Spacing="10">
+                                <Label
+                                    FontAttributes="Bold"
+                                    FontSize="18"
+                                    Text="{Binding ContinueCard.CourseTitle}" />
+                                <Label
+                                    FontSize="13"
+                                    Opacity="0.7"
+                                    Text="{Binding ContinueCard.ModuleTitle}" />
+                                <Label FontSize="14" Text="{Binding ContinueCard.LessonTitle}" />
+
+                                <ProgressBar Progress="{Binding ContinueCard.ProgressPercent}" />
+                                <Label
+                                    FontSize="12"
+                                    HorizontalOptions="End"
+                                    Opacity="0.7"
+                                    Text="{Binding ContinueCard.ProgressText}" />
+
+                                <Button
+                                    Command="{Binding ContinueCommand}"
+                                    HorizontalOptions="End"
+                                    Text="Continue" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Today's tasks. -->
+                    <VerticalStackLayout IsVisible="{Binding HasTodayTasks}" Spacing="8">
+                        <Label
+                            FontAttributes="Bold"
+                            FontSize="12"
+                            Opacity="0.6"
+                            Text="TODAY'S TASKS" />
+
+                        <CollectionView ItemsSource="{Binding TodayTasks}" SelectionMode="None">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:TaskItem">
+                                    <Grid
+                                        Padding="0,8"
+                                        ColumnDefinitions="*,Auto"
+                                        ColumnSpacing="12">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                            <Label Text="{Binding Title}" />
+                                            <Label
+                                                FontSize="12"
+                                                Opacity="0.6"
+                                                Text="{Binding SourceLabel}" />
+                                        </VerticalStackLayout>
+                                        <Label
+                                            Grid.Column="1"
+                                            FontSize="13"
+                                            Opacity="0.7"
+                                            Text="{Binding ProgressText}"
+                                            VerticalOptions="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+
+                    <!-- Recent courses. -->
+                    <VerticalStackLayout
+                        IsVisible="{Binding RecentCourses.Count}"
+                        Spacing="8">
+                        <Label
+                            FontAttributes="Bold"
+                            FontSize="12"
+                            Opacity="0.6"
+                            Text="RECENT COURSES" />
+
+                        <CollectionView
+                            ItemsLayout="HorizontalList"
+                            ItemsSource="{Binding RecentCourses}"
+                            SelectionMode="None">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:CourseCard">
+                                    <Border
+                                        Margin="0,0,8,0"
+                                        Padding="12"
+                                        StrokeShape="RoundRectangle 10"
+                                        WidthRequest="160">
+                                        <VerticalStackLayout Spacing="6">
+                                            <Label
+                                                FontAttributes="Bold"
+                                                LineBreakMode="TailTruncation"
+                                                MaxLines="2"
+                                                Text="{Binding Title}" />
+                                            <Label
+                                                FontSize="12"
+                                                LineBreakMode="TailTruncation"
+                                                MaxLines="1"
+                                                Opacity="0.6"
+                                                Text="{Binding Subtitle}" />
+                                            <ProgressBar Progress="{Binding ProgressPercent}" />
+                                            <Label
+                                                FontSize="11"
+                                                Opacity="0.6"
+                                                Text="{Binding ProgressDetail}" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+            </ScrollView>
+        </Grid>
+    </ContentPage.Content>
+</pages:CourseMothPage>
